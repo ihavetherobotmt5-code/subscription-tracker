@@ -7,8 +7,11 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [expandedNotes, setExpandedNotes] = useState({})
   const [formData, setFormData] = useState({
     name: '',
+    category: 'Tech',
     paymentDate: '',
     duration: '1',
     price: '',
@@ -18,6 +21,15 @@ export default function App() {
     name: '',
     credit: ''
   })
+
+  const categories = [
+    { id: 'Tech', label: '💻 Tech', color: '#3b82f6' },
+    { id: 'Streaming', label: '🎬 Streaming', color: '#f97316' },
+    { id: 'Productivité', label: '📚 Productivité', color: '#8b5cf6' },
+    { id: 'Finance', label: '💰 Finance', color: '#10b981' },
+    { id: 'Santé', label: '🏥 Santé', color: '#ec4899' },
+    { id: 'Autre', label: '📎 Autre', color: '#6b7280' }
+  ]
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -117,7 +129,7 @@ export default function App() {
     if (editingId) {
       setSubscriptions(subscriptions.map(s =>
         s.id === editingId
-          ? { ...s, name: formData.name, endDate, price: parseFloat(formData.price), notes: formData.notes, paymentDate: formData.paymentDate, duration: formData.duration }
+          ? { ...s, name: formData.name, category: formData.category, endDate, price: parseFloat(formData.price), notes: formData.notes, paymentDate: formData.paymentDate, duration: formData.duration }
           : s
       ))
       setEditingId(null)
@@ -125,6 +137,7 @@ export default function App() {
       const newSub = {
         id: Date.now(),
         name: formData.name,
+        category: formData.category,
         paymentDate: formData.paymentDate,
         duration: formData.duration,
         endDate: endDate,
@@ -135,17 +148,18 @@ export default function App() {
       setSubscriptions([...subscriptions, newSub])
     }
 
-    setFormData({ name: '', paymentDate: '', duration: '1', price: '', notes: '' })
+    setFormData({ name: '', category: 'Tech', paymentDate: '', duration: '1', price: '', notes: '' })
     setShowEditModal(false)
   }
 
   const editSubscription = (sub) => {
     setFormData({
       name: sub.name,
+      category: sub.category || 'Tech',
       paymentDate: sub.paymentDate || '',
       duration: sub.duration || '1',
       price: sub.price.toString(),
-      notes: sub.notes
+      notes: sub.notes || ''
     })
     setEditingId(sub.id)
     setShowEditModal(true)
@@ -198,11 +212,12 @@ export default function App() {
   const expiredCount = subscriptions.filter(s => getStatus(s.endDate).status === 'expired').length
 
   const exportCSV = () => {
-    const headers = ['Abonnement', 'Date expiration', 'Jours restants', 'Prix', 'Notes']
+    const headers = ['Abonnement', 'Catégorie', 'Date expiration', 'Jours restants', 'Prix', 'Notes']
     const rows = sorted.map(s => {
       const st = getStatus(s.endDate)
       return [
         s.name,
+        s.category || 'Autre',
         s.endDate,
         st.days,
         `$${s.price.toFixed(2)}`,
@@ -220,6 +235,32 @@ export default function App() {
     a.href = url
     a.download = `subscriptions-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
+  }
+
+  const getFilteredSubscriptions = () => {
+    if (selectedCategory === 'all') return sorted
+    return sorted.filter(s => (s.category || 'Autre') === selectedCategory)
+  }
+
+  const getCategoryStats = () => {
+    const stats = {}
+    categories.forEach(cat => {
+      const subs = subscriptions.filter(s => (s.category || 'Autre') === cat.id)
+      stats[cat.id] = {
+        count: subs.length,
+        total: subs.reduce((sum, s) => sum + s.price, 0),
+        percentage: subscriptions.length > 0 ? Math.round((subs.reduce((sum, s) => sum + s.price, 0) / totalPrice) * 100) : 0,
+        color: cat.color
+      }
+    })
+    return stats
+  }
+
+  const toggleNotes = (id) => {
+    setExpandedNotes(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }))
   }
 
   return (
@@ -263,6 +304,84 @@ export default function App() {
               📥 Exporter CSV
             </button>
           </div>
+
+          {/* Pie Chart & Category Stats */}
+          {subscriptions.length > 0 && (
+            <div className="chart-section">
+              <h2>📊 Dépenses par Catégorie</h2>
+              <div className="chart-container">
+                <svg className="pie-chart" viewBox="0 0 200 200">
+                  {(() => {
+                    const stats = getCategoryStats()
+                    let currentAngle = -90
+                    return Object.entries(stats).map(([catId, data]) => {
+                      if (data.total === 0) return null
+                      const sliceAngle = (data.total / totalPrice) * 360
+                      const endAngle = currentAngle + sliceAngle
+                      const startRad = (currentAngle * Math.PI) / 180
+                      const endRad = (endAngle * Math.PI) / 180
+                      const x1 = 100 + 80 * Math.cos(startRad)
+                      const y1 = 100 + 80 * Math.sin(startRad)
+                      const x2 = 100 + 80 * Math.cos(endRad)
+                      const y2 = 100 + 80 * Math.sin(endRad)
+                      const largeArc = sliceAngle > 180 ? 1 : 0
+                      const path = `M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`
+                      currentAngle = endAngle
+                      const cat = categories.find(c => c.id === catId)
+                      return <path key={catId} d={path} fill={data.color} stroke="var(--bg)" strokeWidth="2" />
+                    })
+                  })()}
+                </svg>
+                <div className="category-stats">
+                  {(() => {
+                    const stats = getCategoryStats()
+                    return Object.entries(stats)
+                      .filter(([_, data]) => data.total > 0)
+                      .map(([catId, data]) => {
+                        const cat = categories.find(c => c.id === catId)
+                        return (
+                          <div key={catId} className="stat-row">
+                            <span className="stat-dot" style={{ backgroundColor: data.color }}></span>
+                            <span className="stat-name">{cat.label}</span>
+                            <span className="stat-amount">${data.total.toFixed(2)}</span>
+                            <span className="stat-percent">{data.percentage}%</span>
+                          </div>
+                        )
+                      })
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Category Filter */}
+          {subscriptions.length > 0 && (
+            <div className="filter-section">
+              <h3>Filtrer par catégorie:</h3>
+              <div className="filter-buttons">
+                <button
+                  className={`filter-btn ${selectedCategory === 'all' ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  Tous ({subscriptions.length})
+                </button>
+                {categories.map(cat => {
+                  const count = subscriptions.filter(s => (s.category || 'Autre') === cat.id).length
+                  if (count === 0) return null
+                  return (
+                    <button
+                      key={cat.id}
+                      className={`filter-btn ${selectedCategory === cat.id ? 'active' : ''}`}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      style={{ borderColor: selectedCategory === cat.id ? cat.color : 'transparent' }}
+                    >
+                      {cat.label} ({count})
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* API Keys Section */}
           <section className="section">
@@ -332,6 +451,18 @@ export default function App() {
                     required
                   />
                   <div>
+                    <label className="form-label">Catégorie</label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      required
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
                     <label className="form-label">Date de paiement</label>
                     <input
                       type="date"
@@ -362,11 +493,11 @@ export default function App() {
                     onChange={(e) => setFormData({...formData, price: e.target.value})}
                     required
                   />
-                  <input
-                    type="text"
-                    placeholder="Notes (optionnel)"
+                  <textarea
+                    placeholder="Notes personnelles (optionnel - ex: Pourquoi tu paies ça? Rappels...)"
                     value={formData.notes}
                     onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                    className="notes-textarea"
                   />
                   {formData.paymentDate && formData.duration && (
                     <div className="expiration-preview">
@@ -400,17 +531,22 @@ export default function App() {
             )}
 
             <div className="subscriptions-grid">
-              {sorted.length === 0 ? (
+              {getFilteredSubscriptions().length === 0 ? (
                 <div className="empty-state">
-                  <p>Aucun abonnement. Ajoutes-en un! 👆</p>
+                  <p>{subscriptions.length === 0 ? 'Aucun abonnement. Ajoutes-en un! 👆' : 'Aucun abonnement dans cette catégorie.'}</p>
                 </div>
               ) : (
-                sorted.map(sub => {
+                getFilteredSubscriptions().map(sub => {
                   const st = getStatus(sub.endDate)
+                  const cat = categories.find(c => c.id === (sub.category || 'Autre'))
+                  const isNotesExpanded = expandedNotes[sub.id]
                   return (
                     <div key={sub.id} className={`sub-card status-${st.status}`}>
                       <div className="card-header">
-                        <h3>{sub.name}</h3>
+                        <div className="card-title-section">
+                          <h3>{sub.name}</h3>
+                          {cat && <span className="category-badge" style={{ backgroundColor: cat.color + '30', color: cat.color }}>{cat.label}</span>}
+                        </div>
                         <span className={`badge badge-${st.status}`}>{st.label}</span>
                       </div>
 
@@ -465,9 +601,19 @@ export default function App() {
                         </div>
 
                         {sub.notes && (
-                          <div className="card-row">
-                            <span className="label">Notes:</span>
-                            <span className="notes">{sub.notes}</span>
+                          <div className="notes-section">
+                            <button
+                              className="notes-toggle"
+                              onClick={() => toggleNotes(sub.id)}
+                              title={isNotesExpanded ? 'Masquer les notes' : 'Afficher les notes'}
+                            >
+                              📌 {isNotesExpanded ? '▼' : '▶'} Notes
+                            </button>
+                            {isNotesExpanded && (
+                              <div className="notes-content">
+                                {sub.notes}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
