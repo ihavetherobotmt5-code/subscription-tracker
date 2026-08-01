@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 export default function App() {
@@ -21,6 +21,7 @@ export default function App() {
     name: '',
     credit: ''
   })
+  const isFirstRender = useRef(true)
 
   const categories = [
     { id: 'Tech', label: '💻 Tech', color: '#3b82f6' },
@@ -55,8 +56,12 @@ export default function App() {
     }
   }, [darkMode])
 
-  // Save to localStorage
+  // Save to localStorage (skip first render)
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     localStorage.setItem('subscriptions', JSON.stringify(subscriptions))
   }, [subscriptions])
 
