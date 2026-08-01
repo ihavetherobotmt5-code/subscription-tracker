@@ -18,17 +18,22 @@ export default function App() {
     name: '',
     credit: ''
   })
+  const [generalNotes, setGeneralNotes] = useState('')
+  const [isEditingNotes, setIsEditingNotes] = useState(false)
+  const [editingNotesText, setEditingNotesText] = useState('')
 
   // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('subscriptions')
     const savedDarkMode = localStorage.getItem('darkMode')
     const savedApiKeys = localStorage.getItem('apiKeys')
+    const savedNotes = localStorage.getItem('generalNotes')
 
     if (saved) setSubscriptions(JSON.parse(saved))
     if (savedApiKeys) setApiKeys(JSON.parse(savedApiKeys))
     if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode))
     else setDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches)
+    if (savedNotes) setGeneralNotes(savedNotes)
   }, [])
 
   // Apply dark mode to document
@@ -55,6 +60,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode))
   }, [darkMode])
+
+  useEffect(() => {
+    localStorage.setItem('generalNotes', generalNotes)
+  }, [generalNotes])
 
   const getStatus = (endDate) => {
     const today = new Date()
@@ -196,6 +205,20 @@ export default function App() {
   const totalPrice = subscriptions.reduce((sum, s) => sum + s.price, 0)
   const totalApiCredit = apiKeys.reduce((sum, k) => sum + k.credit, 0)
   const expiredCount = subscriptions.filter(s => getStatus(s.endDate).status === 'expired').length
+
+  const startEditingNotes = () => {
+    setEditingNotesText(generalNotes)
+    setIsEditingNotes(true)
+  }
+
+  const saveNotes = () => {
+    setGeneralNotes(editingNotesText)
+    setIsEditingNotes(false)
+  }
+
+  const cancelEditingNotes = () => {
+    setIsEditingNotes(false)
+  }
 
   const exportCSV = () => {
     const headers = ['Abonnement', 'Date expiration', 'Jours restants', 'Prix', 'Notes']
@@ -494,6 +517,45 @@ export default function App() {
                 })
               )}
             </div>
+          </section>
+
+          {/* General Notes Section */}
+          <section className="section general-notes-section">
+            <h2>📝 Notes & Rappels Généraux</h2>
+
+            {!isEditingNotes ? (
+              <div className="notes-display">
+                <div className="notes-content-box">
+                  {generalNotes ? (
+                    <p>{generalNotes}</p>
+                  ) : (
+                    <p className="empty-notes">Aucune note. Clique sur "Éditer" pour en ajouter une.</p>
+                  )}
+                </div>
+                <button className="btn-edit-notes" onClick={startEditingNotes}>
+                  ✏️ Éditer Notes
+                </button>
+              </div>
+            ) : (
+              <div className="notes-edit">
+                <textarea
+                  value={editingNotesText}
+                  onChange={(e) => setEditingNotesText(e.target.value)}
+                  className="general-notes-textarea"
+                  placeholder="Écris tes notes, rappels, budgets, etc.&#10;Exemple:&#10;- À tester ChatGPT Codex $20&#10;- N'oublie pas samedi Claude Pro&#10;- Budget tech max: $150"
+                  rows="8"
+                  autoFocus
+                />
+                <div className="notes-buttons">
+                  <button className="btn-save" onClick={saveNotes}>
+                    💾 Sauvegarder
+                  </button>
+                  <button className="btn-cancel-notes" onClick={cancelEditingNotes}>
+                    ✕ Annuler
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         </main>
       </div>

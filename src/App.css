@@ -642,6 +642,130 @@ body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* General Notes Section */
+.general-notes-section {
+  background-color: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 40px;
+}
+
+.general-notes-section h2 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.notes-display {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.notes-content-box {
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  min-height: 120px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.empty-notes {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.notes-content-box p {
+  margin: 0;
+}
+
+.btn-edit-notes {
+  align-self: flex-start;
+  background-color: var(--blue);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-edit-notes:hover {
+  opacity: 0.9;
+}
+
+.notes-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.general-notes-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  font-weight: normal;
+}
+
+.general-notes-textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.notes-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-save {
+  background-color: #22c55e;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-save:hover {
+  opacity: 0.9;
+}
+
+.btn-cancel-notes {
+  background-color: var(--border);
+  color: var(--fg);
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-cancel-notes:hover {
+  opacity: 0.8;
+}
+
 @media (max-width: 768px) {
   .main {
     padding: 20px 15px;
