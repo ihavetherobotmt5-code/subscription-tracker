@@ -521,7 +521,7 @@ export default function App() {
 
           {/* General Notes Section */}
           <section className="section general-notes-section">
-            <h2>📝 Notes & Rappels Généraux v2</h2>
+            <h2>📝 Notes & Rappels Généraux ✨</h2>
 
             {!isEditingNotes ? (
               <div className="notes-display">
