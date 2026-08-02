@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
+// Build timestamp: 2026-08-01 22:10 - Force rebuild with Notes section
 export default function App() {
   const [subscriptions, setSubscriptions] = useState([])
   const [apiKeys, setApiKeys] = useState([])
